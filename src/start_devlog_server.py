@@ -14,7 +14,9 @@ if __name__ == '__main__':
     project = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
     assets = os.path.join(project, 'assets')
 
-    server.add_static('md5.js', os.path.join(assets, 'md5.js'))
-    server.add_dynamic('index.html', test_index, '.html')
+    server.add_multiple_static(
+        '/',
+        os.path.join(project, 'lib', 'startbootstrap-sb-admin'),
+        lambda p: os.path.basename(p) not in ('LICENSE', 'gulpfile.js'))
 
     server.serve_forever('127.0.0.1', 8080)
