@@ -1,0 +1,28 @@
+---
+logs:
+ - path: letsencrypt\letsencrypt.log
+ - path: alternatives.log
+ - path: auth.log
+ - path: cloud-init-output.log
+ - path: cloud-init.log
+ - path: dpkg.log
+ - path: kern.log
+ - path: syslog
+ - path: ufw.log
+ - path: apt\history.log
+ - path: apt\term.log
+ - path: letsencrypt\letsencrypt.log
+ - path: nginx\access.log
+ - path: nginx\error.log
+ - path: postgresql\postgresql-10-main.log
+ - path: unattended-upgrades\unattended-upgrades-dpkg.log
+ - path: unattended-upgrades\unattended-upgrades.log
+#commands:
+# - name:     Build
+#   title:    Build Test Server
+#   working:  /vagrant/devlog
+#   commands:
+#    - title: Run tests
+#      cmd:   run_tests.sh
+#    - title: Collect Statics
+#      cmd:   python manage.py collectstatic
