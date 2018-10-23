@@ -6,7 +6,7 @@ from .SourceMonitorThread import SourceMonitorThread
 class LogTailMonitor(SourceMonitorThread):
     '''Monitor a traditional log file by watching it for new lines'''
 
-    MAX_BYTES = 4096
+    MAX_BYTES = 1024 * 1024
 
     def __init__(self, path, target_queue, name=None, sleep_sec=1, encoding='utf8'):
 
@@ -33,15 +33,16 @@ class LogTailMonitor(SourceMonitorThread):
 
             # Check to see if file shrunk
             if self.__last_pos is not None:
-                if os.path.getsize(self.__path) <= self.__last_pos:
+                if os.path.getsize(self.__path) < self.__last_pos:
                     self.__last_pos = None
                     self.__last_bytes = None
 
             # If last bytes present, see if they're still there
             if self.__last_bytes is not None and self.__last_pos is not None:
                 with open(self.__path, 'rt') as fh:
-                    fh.seek(self.__last_pos - len(self.__last_bytes))
-                    if fh.read(self.MAX_BYTES) != self.__last_bytes:
+                    last_read_pos = self.__last_pos - len(self.__last_bytes)
+                    fh.seek(last_read_pos)
+                    if fh.read(len(self.__last_bytes)) != self.__last_bytes:
                         self.__last_pos = None
                         self.__last_bytes = None
 
@@ -53,7 +54,8 @@ class LogTailMonitor(SourceMonitorThread):
 
             # Read new bytes
             with open(self.__path, 'rt') as fh:
-                fh.seek(pos)
+                if pos != 0:
+                    fh.seek(pos)
                 new_data = fh.read(self.MAX_BYTES)
 
             if not new_data:

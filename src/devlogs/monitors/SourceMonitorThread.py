@@ -72,7 +72,8 @@ class SourceMonitorThread(Thread):
             if new_data is not None:
                 for line in self.handle_new_chars(new_data):
                     self.handle_new_line(line)
-            sleep(self.__sleep_for)
+            else:
+                sleep(self.__sleep_for)
 
 
     def get_new_chars(self):
@@ -122,9 +123,9 @@ class SourceMonitorThread(Thread):
         '''
 
         # Look for timestamp
-        detected = search_dates(line.txt, languages=['en'])
-        if len(detected) > 0:
-            line.ts = min(detected)
+        # detected = search_dates(line.txt, languages=['en'])
+        # if len(detected) > 0:
+        #     line.ts = min(detected)
 
         # Dispatch
         self.__target.put(line)
