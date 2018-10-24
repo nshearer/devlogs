@@ -6,23 +6,19 @@
 {% endblock %}
 
 {% block page_content %}
-
-          <div class="row">
-              <div class="col-12">
-                  <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <i class="fa fa-stream fa-fw"></i> Monitors
-                        </div> <!-- /.panel-heading -->
-                        <div class="panel-body">
-                          {% for monitor in server.monitors %}
-                          <div>
-                            {{ monitor.source_spec }}
-                          </div>
-                          {% endfor %}
-                        </div><!-- /.panel-body -->
+          <!-- Log Last Lines -->
+              <div class="card mb-12">
+                    <div class="card-header">
+                        <i class="fa fa-stream fa-fw"></i> Monitors
                     </div>
-              </div>
-          </div>
+                    <div class="card-body">
+                      {% for monitor in server.monitors %}
+                      <div>
+                        {{ monitor.source_spec }}
+                      </div>
+                      {% endfor %}
+                    </div>
+                </div>
 {% endblock %}
 
 
