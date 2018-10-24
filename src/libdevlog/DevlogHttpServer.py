@@ -46,6 +46,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
 
         # Dynamic views
         self.add_dynamic('index.html', views.index_view)
+        self.add_dynamic('status', views.status_view, content_type='application/json')
 
         # Redirects
         self.redirect('', 'index.html')
@@ -66,12 +67,11 @@ class DevlogHttpServer(DevelopmentHttpServer):
                 os.path.join(project_folder, 'lib', 'startbootstrap-sb-admin', bootstrap_dir))
     
         self.add_static('favicon.ico', os.path.join(assets, 'favicon.ico'))
-    
+        self.add_static('js/status-check.js', os.path.join(assets, 'js', 'status-check.js'))
+
         self.add_asset('base.j2.html', os.path.join(assets, 'base.j2.html'))
         self.add_asset('index.j2.html', os.path.join(assets, 'index.j2.html'))
 
-    def _register_dynamics(self):
-        '''Register all the dynamic endpoints'''
 
 
     def add_monitors_from_config(self):

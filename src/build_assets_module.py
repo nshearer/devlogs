@@ -9,7 +9,7 @@ if __name__ == '__main__':
     try:
         module_path,  = sys.argv[1:]
     except ValueError:
-        print("USAGE: %s project_dir module" % (os.path.basename(sys.argv[0])))
+        print("USAGE: %s module_path" % (os.path.basename(sys.argv[0])))
         sys.exit(1)
 
     # Paths
