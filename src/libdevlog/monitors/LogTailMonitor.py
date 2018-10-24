@@ -1,4 +1,5 @@
 import os
+import logging
 
 from .SourceMonitorThread import SourceMonitorThread
 
@@ -8,18 +9,30 @@ class LogTailMonitor(SourceMonitorThread):
 
     MAX_BYTES = 1024 * 1024
 
-    def __init__(self, path, name=None, sleep_sec=1, encoding='utf8'):
+    def __init__(self, path, monitor_id, sleep_sec=1, encoding='utf8'):
 
-        self.__path = path
+        self.__log = logging.getLogger(__name__)
+
+        self.__path = os.path.abspath(path)
         self.__encoding = encoding
+        self.__name = "monitor-%s" % (monitor_id)
 
-        if name is None:
-            name = os.path.basename(path)
+        if self.__path is not None:
+            if os.path.exists(self.__path) and os.path.isfile(self.__path):
+                self.__name += '-'+os.path.basename(self.__path)
+            else:
+                self.__log.warning("%s is not a file or does not exist" % (self.__path))
 
-        super().__init__(name=name, sleep_sec=sleep_sec)
+        super().__init__(monitor_id=monitor_id, name=self.__name, sleep_sec=sleep_sec)
 
         self.__last_bytes = None
         self.__last_pos = None
+
+
+    @property
+    def source_spec(self):
+        '''What to display to the user on what this is monitoring'''
+        return self.__path
 
 
     def get_new_chars(self):

@@ -4,6 +4,8 @@ from devhttp import DevelopmentHttpServer
 
 from . import views
 
+from .monitors import LogTailMonitor
+
 class DevlogHttpServer(DevelopmentHttpServer):
     '''
     Web app server for showing monitored log content
@@ -33,6 +35,11 @@ class DevlogHttpServer(DevelopmentHttpServer):
             self._add_file_assets(project_folder)
 
         self._configure()
+
+        self.config = config
+        self.monitors = list()
+
+        self.add_monitors_from_config()
 
 
     def _configure(self):
@@ -65,6 +72,26 @@ class DevlogHttpServer(DevelopmentHttpServer):
 
     def _register_dynamics(self):
         '''Register all the dynamic endpoints'''
+
+
+    def add_monitors_from_config(self):
+        '''
+        Craete monitor workers/threads for each entry listed in config
+        '''
+        for monitor_config in self.config.monitors:
+            monitor_id = len(self.monitors)
+            if monitor_config.monitor_type == 'tail':
+                self.monitors.append(LogTailMonitor(
+                    path = monitor_config.path,
+                    monitor_id = monitor_id))
+
+
+    def start_monitors(self):
+        '''
+        Start all of the monitor threads
+        '''
+        for monitor in self.monitors:
+            monitor.start()
 
 
 

@@ -57,7 +57,8 @@ class SourceMonitorThread(Thread):
 
     '''
 
-    def __init__(self, name, sleep_sec=1):
+    def __init__(self, monitor_id, name, sleep_sec=1):
+        self.__monitor_id = monitor_id
         self.__name = name
         self.__sleep_for = sleep_sec
 
@@ -67,6 +68,12 @@ class SourceMonitorThread(Thread):
         super().__init__(daemon=True, name=name)
 
         self.__new_char_buffer = ''
+
+
+    @property
+    def source_spec(self):
+        '''What to display to the user on what this is monitoring'''
+        return self.__name
 
 
     def run(self):
