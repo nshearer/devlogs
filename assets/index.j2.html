@@ -7,18 +7,18 @@
 
 {% block page_content %}
           <!-- Log Last Lines -->
-              <div class="card mb-12">
-                    <div class="card-header">
-                        <i class="fa fa-stream fa-fw"></i> Monitors
-                    </div>
-                    <div class="card-body">
-                      {% for monitor in server.monitors %}
-                      <div>
-                        {{ monitor.source_spec }}
-                      </div>
-                      {% endfor %}
-                    </div>
+          <div class="card mb-12">
+                <div class="card-header">
+                    <i class="fa fa-stream fa-fw"></i> Monitors
                 </div>
+                <div class="card-body">
+                    {% for monitor in server.monitors %}
+                    <div class="last_log_div" id="monitor_{{ monitor.monitor_id }}">
+                        <div class="last_log_line_txt">{{ monitor.source_spec }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
 {% endblock %}
 
 
