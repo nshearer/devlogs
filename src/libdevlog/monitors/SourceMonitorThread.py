@@ -71,6 +71,12 @@ class SourceMonitorThread(Thread):
 
 
     @property
+    def monitor_id(self):
+        with self.monitor_lock:
+            return self.__monitor_id
+
+
+    @property
     def source_spec(self):
         '''What to display to the user on what this is monitoring'''
         return self.__name
@@ -139,7 +145,7 @@ class SourceMonitorThread(Thread):
 
         # Save line
         with self.monitor_lock:
-            line.linenum = len(self.log_lines)
+            line.linenum = len(self.__log_lines)
             self.__log_lines.append(line)
 
 
