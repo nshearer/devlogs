@@ -46,6 +46,8 @@ def do_run(argv):
 
     server = DevlogHttpServer(config=config, project_folder=assets_path)
 
+    server.start_monitors()
+
     print("Serving http://%s:%d" % (argv.ip, argv.port))
     server.serve_forever(argv.ip, argv.port)
 

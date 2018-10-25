@@ -4,7 +4,7 @@ import subprocess
 from time import sleep
 
 MIMIC = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'mimic.py')
-TESTFILES = r"G:\Projects\sbc-signup\testfiles"
+TESTFILES = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'testfiles')
 
 PROCS=list()
 

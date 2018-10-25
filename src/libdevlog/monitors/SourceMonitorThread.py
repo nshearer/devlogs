@@ -57,16 +57,29 @@ class SourceMonitorThread(Thread):
 
     '''
 
-    def __init__(self, name, sleep_sec=1):
+    def __init__(self, monitor_id, name, sleep_sec=1):
+        self.__monitor_id = monitor_id
         self.__name = name
         self.__sleep_for = sleep_sec
 
         self.monitor_lock = RLock()
-        self.log_lines = list()
+        self.__log_lines = list()
 
         super().__init__(daemon=True, name=name)
 
         self.__new_char_buffer = ''
+
+
+    @property
+    def monitor_id(self):
+        with self.monitor_lock:
+            return self.__monitor_id
+
+
+    @property
+    def source_spec(self):
+        '''What to display to the user on what this is monitoring'''
+        return self.__name
 
 
     def run(self):
@@ -132,6 +145,31 @@ class SourceMonitorThread(Thread):
 
         # Save line
         with self.monitor_lock:
-            line.linenum = len(self.log_lines)
-            self.log_lines.append(line)
+            line.linenum = len(self.__log_lines)
+            self.__log_lines.append(line)
+
+
+    def all_lines(self):
+        with self.monitor_lock:
+            for line in self.__log_lines:
+                yield line
+
+
+    def last_lines(self, num=None):
+        if num is None:
+            with self.monitor_lock:
+                for i in range(len(self.__log_lines)-1, 0-1, -1):
+                    yield self.__log_lines[i]
+        else:
+            for i, line in enumerate(self.last_lines()):
+                if i < num:
+                    yield line
+                else:
+                    return
+
+
+    @property
+    def last_line(self):
+        with self.monitor_lock:
+            return self.__log_lines[-1]
 
