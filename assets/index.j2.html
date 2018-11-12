@@ -6,26 +6,22 @@
 {% endblock %}
 
 {% block page_content %}
-          <!-- Log Last Lines -->
-          <div class="card mb-12">
+    {% for monitor in server.monitors %}
+          <div class="card mb-12" id="monitor_{{ monitor.monitor_id }}">
                 <div class="card-header">
-                    <i class="fa fa-stream fa-fw"></i> Monitors
+                    <i class="fa fa-stream fa-fw"></i> {{ monitor.source_spec }}
                 </div>
                 <div class="card-body">
-                    {% for monitor in server.monitors %}
-                    <div class="last_log_div" id="monitor_{{ monitor.monitor_id }}">
-                        <div class="last_log_line_txt">{{ monitor.source_spec }}</div>
-                        <div class="log_line">
-                            {% if monitor.last_line %}
-                                {{ monitor.last_line or '' }}
-                            {% else %}
-                                <em>No data</em>
-                            {% endif %}
-                        </div>
+                    <div class="log_line">
+                        {% if monitor.last_line %}
+                            {{ monitor.last_line or '' }}
+                        {% else %}
+                            <em>No data</em>
+                        {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
+    {% endfor %}
 {% endblock %}
 
 
