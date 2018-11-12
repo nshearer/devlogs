@@ -15,6 +15,13 @@
                     {% for monitor in server.monitors %}
                     <div class="last_log_div" id="monitor_{{ monitor.monitor_id }}">
                         <div class="last_log_line_txt">{{ monitor.source_spec }}</div>
+                        <div class="log_line">
+                            {% if monitor.last_line %}
+                                {{ monitor.last_line or '' }}
+                            {% else %}
+                                <em>No data</em>
+                            {% endif %}
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
