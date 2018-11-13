@@ -12,12 +12,8 @@
                     <i class="fa fa-stream fa-fw"></i> {{ monitor.source_spec }}
                 </div>
                 <div class="card-body">
-                    <div class="log_line">
-                        {% if monitor.last_line %}
-                            {{ monitor.last_line or '' }}
-                        {% else %}
-                            <em>No data</em>
-                        {% endif %}
+                    <div class="log_line" id="monitor_{{ monitor.monitor_id }}_lastline">
+
                     </div>
                 </div>
             </div>
@@ -25,3 +21,13 @@
 {% endblock %}
 
 
+{% block page_js %}
+    <script src="/js/lastline-update.js"></script>
+    <script>
+        var updaters = [
+        {% for monitor in server.monitors %}
+            LogLineUpdater({{ monitor.monitor_id }}),
+        {% endfor %}
+        ]
+    </script>
+{% endblock %}

@@ -47,6 +47,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
         # Dynamic views
         self.add_dynamic('index.html', views.index_view)
         self.add_dynamic('status', views.status_view, content_type='application/json')
+        self.add_dynamic('nextline', views.nextline_view, content_type='application/json', autolock=False)
 
         # Redirects
         self.redirect('', 'index.html')
@@ -68,6 +69,9 @@ class DevlogHttpServer(DevelopmentHttpServer):
     
         self.add_static('favicon.ico', os.path.join(assets, 'favicon.ico'))
         self.add_static('js/status-check.js', os.path.join(assets, 'js', 'status-check.js'))
+        self.add_static('js/lastline-update.js', os.path.join(assets, 'js', 'lastline-update.js'))
+
+        self.add_static('css/devlogs.css', os.path.join(assets, 'css', 'devlogs.css'))
 
         self.add_asset('base.j2.html', os.path.join(assets, 'base.j2.html'))
         self.add_asset('index.j2.html', os.path.join(assets, 'index.j2.html'))
