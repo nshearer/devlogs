@@ -18,6 +18,7 @@ function LogLineUpdater(monitor_id) {
                 if (data.status == 'ok') {
                     console.log(data.text);
                     $('#monitor_' + obj.monitor_id + '_lastline').html(data.text);
+                    $('#monitor_' + obj.monitor_id + '_lastline').effect("highlight", {}, 1500);
                 }
                 /*
                 if(data.text) {

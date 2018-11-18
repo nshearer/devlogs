@@ -76,6 +76,13 @@ class DevlogHttpServer(DevelopmentHttpServer):
         self.add_asset('base.j2.html', os.path.join(assets, 'base.j2.html'))
         self.add_asset('index.j2.html', os.path.join(assets, 'index.j2.html'))
 
+        # jquery-ui files
+        lib = os.path.join(project_folder, 'lib', 'jquery-ui-1.12.1')
+        for filename in ('jquery-ui.js', 'jquery-ui.css'):
+            path = os.path.join(lib, filename)
+            if not os.path.exists(path):
+                raise Exception("Missing asset: " + path)
+            self.add_static('jquery-ui/'+filename, path)
 
 
     def add_monitors_from_config(self):
