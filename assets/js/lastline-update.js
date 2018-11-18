@@ -4,22 +4,26 @@
  */
 
 function LogLineUpdater(monitor_id) {
-    var obj = {};
+    var this_monitor = {};
 
-    obj.monitor_id = monitor_id;
-    obj.updateLastLine = function() {
+    this_monitor.monitor_id = monitor_id;
+    this_monitor.last_line_id = null;
+    this_monitor.updateLastLine = function() {
         $.ajax({
             type: "GET",
-            url: "nextline",
-            data: {'monitor_id': this.monitor_id},
+            url: 'nextline',
+            data: {
+                'monitor_id': this.monitor_id,
+                'last_line_id': (this_monitor.last_line_id == null) ? '-1' : this_monitor.last_line_id},
             dataType: "json",
-            success: function (data) {
-                console.log("Got: " + data.status + " from " + obj.monitor_id);
-                if (data.status == 'ok') {
-                    console.log(data.text);
-                    $('#monitor_' + obj.monitor_id + '_lastline').html(data.text);
-                    $('#monitor_' + obj.monitor_id + '_lastline').effect("highlight", {}, 1500);
+            success: function (response) {
+                console.log("Got: " + response.status + " from " + this_monitor.monitor_id + " (line ID " + response.line_id + ")");
+                if (response.status == 'ok') {
+                    $('#monitor_' + this_monitor.monitor_id + '_lastline').html(response.text);
+                    $('#monitor_' + this_monitor.monitor_id + '_lastline').effect("highlight", {}, 1500);
+                    this_monitor.last_line_id = response.line_id;
                 }
+                this_monitor.updateLastLine();
                 /*
                 if(data.text) {
                     alert("Got: " + data.text);
@@ -35,13 +39,17 @@ function LogLineUpdater(monitor_id) {
                 instanse = false;
                 state = data.state;
                 */
+            },
+            error: function (response) {
+                console.log("Request for monitor " + this_monitor.monitor_id + " FAILED");
+                this_monitor.updateLastLine();
             }
         });
     }
 
     // Start first update
-    obj.updateLastLine();
+    this_monitor.updateLastLine();
 
-    return obj;
+    return this_monitor;
 }
 

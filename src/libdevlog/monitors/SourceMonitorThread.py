@@ -207,6 +207,9 @@ class SourceMonitorThread(Thread):
         '''
         Hold until either a new line has been detected in the log, or a timeout occurs
 
+        Don't need to hold lock to call this, as it will use the condition to wait until
+        available.
+
         :param last_line_num:
             The last LogLine.line_id the caller knows of.
             Will only return lines greater than this.
@@ -218,7 +221,7 @@ class SourceMonitorThread(Thread):
             If the timeout occurs
         '''
 
-        def _new_line():
+        def _new_line_available():
             last = self.last_line
             if last is not None:
                 if last_line_num is None or last.line_id > last_line_num:
@@ -229,8 +232,9 @@ class SourceMonitorThread(Thread):
         with self.__new_line_available:
 
             # Wait for new line to be available
-            while _new_line() is None:
-                self.__new_line_available.wait()
+            while not _new_line_available():
+                if not self.__new_line_available.wait(timeout=timeout_sec):
+                    raise NoNewLines()
 
             # Collect all new lines
             lines = list()
