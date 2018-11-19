@@ -35,7 +35,7 @@ def nextlines_view(request, server, assets):
             watch = server.all_log_lines
         else:
             try:
-                watch = server.monitors[monitor_id]
+                watch = server.monitors[monitor_id].collection
             except Exception as e:
                 return json.dumps({
                     'status': 'error',

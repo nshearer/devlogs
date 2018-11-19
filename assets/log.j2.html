@@ -1,0 +1,27 @@
+{% extends "base.j2.html" %}
+
+{% block page_title %}
+    {{ monitor.source_spec }}
+{% endblock %}
+
+{% block page_content %}
+      <div class="card mb-12" id="monitor_{{ monitor.monitor_id }}">
+            <div class="card-header">
+                <i class="fa fa-stream fa-fw"></i> Log Lines
+            </div>
+            <div class="card-body">
+                <div class="log_line" id="log_lines">
+                </div>
+            </div>
+        </div>
+{% endblock %}
+
+
+{% block page_js %}
+    <script src="/js/log-tail.js"></script>
+    <script>
+        // Create object to watch for new lines and start
+        var updater = LogTailMonitor({{ monitor.monitor_id }});
+        updater.checkForNewLines();
+    </script>
+{% endblock %}

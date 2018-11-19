@@ -167,7 +167,7 @@ class LogLineCollection:
         '''
 
         # Custom condition check function that respects last_line_id
-        def _new_line_available():
+        def _check_new_line_available():
             last = self.last_line
             if last is not None:
                 if last_line_id is None or last.line_id > last_line_id:
@@ -175,12 +175,12 @@ class LogLineCollection:
             return False
 
         # Get condition lock (which gets collection lock)
-        with self.__new_line_available:
+        with self.__new_lines_avail:
 
             # Wait for new line to be available
-            while not _new_line_available():
+            while not _check_new_line_available():
                 # wait() releases lock.  Will return False on timeout
-                if not self.__new_line_available.wait(timeout=timeout_sec):
+                if not self.__new_lines_avail.wait(timeout=timeout_sec):
                     raise NoNewLines()
 
             # Lock is req-aquired here and we know there's new data
