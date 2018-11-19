@@ -3,53 +3,71 @@
  https://css-tricks.com/jquery-php-chat/
  */
 
-function LogLineUpdater(monitor_id) {
-    var this_monitor = {};
+function LogLineUpdater() {
+    /*
+     Object to watch for updates from any log file and update the the last line
+     on the index page.
+     Function creates and returns an object.
+     */
+    var monitor = {};
 
-    this_monitor.monitor_id = monitor_id;
-    this_monitor.last_line_id = null;
-    this_monitor.updateLastLine = function() {
+    monitor.last_line_id = null;
+    monitor.updateLastLine = function() {
         $.ajax({
             type: "GET",
-            url: 'nextline',
+            url: 'nextlines',
             data: {
-                'monitor_id': this.monitor_id,
-                'last_line_id': (this_monitor.last_line_id == null) ? '-1' : this_monitor.last_line_id},
+                'monitor_id': 'all',
+                'last_line_id': (monitor.last_line_id == null) ? '-1' : monitor.last_line_id,
+                'how_many': 'all',
+            },
             dataType: "json",
+
+
             success: function (response) {
-                console.log("Got: " + response.status + " from " + this_monitor.monitor_id + " (line ID " + response.line_id + ")");
+
+                console.log("Got " + response.status + " /nextlines ");
+
                 if (response.status == 'ok') {
-                    $('#monitor_' + this_monitor.monitor_id + '_lastline').html(response.text);
-                    $('#monitor_' + this_monitor.monitor_id + '_lastline').effect("highlight", {}, 1500);
-                    this_monitor.last_line_id = response.line_id;
-                }
-                this_monitor.updateLastLine();
-                /*
-                if(data.text) {
-                    alert("Got: " + data.text);
-                    for (var i = 0; i < data.text.length; i++) {
-                        $('#chat-area').append($("
 
-                        "+ data.text[i] +"
+                    // Collect just the last lines
+                    var last_lines = {};
+                    for (var i = 0; i < response.lines.length; i++) {
+                        var line = response.lines[i];
+                        last_lines[line.monitor_id] = line;
+                    }
 
-                        "));
+                    // Iterate latest new log lines
+                    for (var monitor_id in last_lines) {
+                        var line = last_lines[monitor_id];
+                        var lastline_div = '#monitor_' + line.monitor_id + '_lastline';
+
+                        // Update displayed text
+                        $(lastline_div).html(line.text);
+
+                        // Highlight text for a short time
+                        $(lastline_div).effect("highlight", {}, 1500);
+
+                        // Record line id
+                        if (monitor.last_line_id === null || line.line_id > monitor.last_line_id)
+                            monitor.last_line_id = line.line_id;
                     }
                 }
-                document.getElementById('chat-area').scrollTop = document.getElementById('chat-area').scrollHeight;
-                instanse = false;
-                state = data.state;
-                */
+
+                // Start a new request to get the next data (long poll)
+                monitor.updateLastLine();
             },
+
+
             error: function (response) {
-                console.log("Request for monitor " + this_monitor.monitor_id + " FAILED");
-                this_monitor.updateLastLine();
+                console.log("Request for monitor " + monitor.monitor_id + " FAILED");
+
+                // Start next request
+                monitor.updateLastLine();
             }
         });
     }
 
-    // Start first update
-    this_monitor.updateLastLine();
-
-    return this_monitor;
+    return monitor;
 }
 

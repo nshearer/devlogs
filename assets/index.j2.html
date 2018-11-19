@@ -24,10 +24,8 @@
 {% block page_js %}
     <script src="/js/lastline-update.js"></script>
     <script>
-        var updaters = [
-        {% for monitor in server.monitors %}
-            LogLineUpdater({{ monitor.monitor_id }}),
-        {% endfor %}
-        ]
+        // Create object to watch for new lines and start
+        var updater = LogLineUpdater();
+        updater.updateLastLine();
     </script>
 {% endblock %}

@@ -5,6 +5,7 @@ from devhttp import DevelopmentHttpServer
 from . import views
 
 from .monitors import LogTailMonitor
+from .monitors import LogLineGroup
 
 class DevlogHttpServer(DevelopmentHttpServer):
     '''
@@ -38,6 +39,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
 
         self.config = config
         self.monitors = list()
+        self.all_log_lines = LogLineGroup()
 
         self.add_monitors_from_config()
 
@@ -47,7 +49,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
         # Dynamic views
         self.add_dynamic('index.html', views.index_view)
         self.add_dynamic('status', views.status_view, content_type='application/json')
-        self.add_dynamic('nextline', views.nextline_view, content_type='application/json', autolock=False)
+        self.add_dynamic('nextlines', views.nextlines_view, content_type='application/json', autolock=False)
 
         # Redirects
         self.redirect('', 'index.html')
@@ -92,9 +94,14 @@ class DevlogHttpServer(DevelopmentHttpServer):
         for monitor_config in self.config.monitors:
             monitor_id = len(self.monitors)
             if monitor_config.monitor_type == 'tail':
-                self.monitors.append(LogTailMonitor(
+
+                monitor = LogTailMonitor(
                     path = monitor_config.path,
-                    monitor_id = monitor_id))
+                    monitor_id = monitor_id)
+
+                self.monitors.append(monitor)
+
+                self.all_log_lines.add_collection(monitor.collection)
 
 
     def start_monitors(self):
@@ -103,6 +110,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
         '''
         for monitor in self.monitors:
             monitor.start()
+
 
 
 

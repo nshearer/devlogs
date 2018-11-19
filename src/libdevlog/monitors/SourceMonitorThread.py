@@ -3,33 +3,7 @@ from threading import Thread
 from time import sleep
 from threading import RLock, Condition, Lock
 
-class LogLine:
-    '''Encapsulate a line from a log file'''
-
-    def __init__(self, txt, source_name, line_id):
-        self.__txt = txt
-        self.__source = source_name
-        self.linenum = None
-        self.ts = None
-        self.line_id = line_id
-
-    @property
-    def txt(self):
-        return self.__txt
-
-    @property
-    def source_name(self):
-        return self.__source
-
-    def __str__(self):
-        return self.txt
-
-    def __repr__(self):
-        return "LogLine"
-
-
-class NoNewLines(Exception): pass
-
+from .LogLineCollection import LogLineCollection, LogLine
 
 class SourceMonitorThread(Thread):
     '''
@@ -66,21 +40,19 @@ class SourceMonitorThread(Thread):
         self.__name = name
         self.__sleep_for = sleep_sec
 
-        self.monitor_lock = RLock()
-        self.__log_lines = list()
-        self.__next_line_id = 0
+        self.collection = LogLineCollection()
+
+        #self.monitor_lock = RLock()
 
         super().__init__(daemon=True, name=name)
 
         self.__new_char_buffer = ''
-
-        self.__new_line_available = Condition(lock=self.monitor_lock)
+        self.__next_line_num = 1
 
 
     @property
     def monitor_id(self):
-        with self.monitor_lock:
-            return self.__monitor_id
+        return self.__monitor_id
 
 
     @property
@@ -112,12 +84,6 @@ class SourceMonitorThread(Thread):
             yield None
 
 
-    def _get_next_line_id(self):
-        with self.monitor_lock:
-            self.__next_line_id += 1
-            return self.__next_line_id - 1
-
-
     def handle_new_chars(self, chars):
         '''
         New characters read from monitored log source
@@ -134,10 +100,16 @@ class SourceMonitorThread(Thread):
         lines = (self.__new_char_buffer + chars).split("\n")
         for line in lines[:-1]:
             if len(line) > 0:
-                yield LogLine(line, self.__name, self._get_next_line_id())
+                yield LogLine(
+                    txt = line,
+                    source_name = self.__name,
+                    monitor_id = self.__monitor_id)
 
         if lines[-1].endswith("\n"):
-            yield LogLine(lines[-1], self.__name)
+            yield LogLine(
+                txt = lines[-1],
+                source_name = self.__name,
+                monitor_id = self.__monitor_id)
             self.__new_char_buffer = ''
         else:
             self.__new_char_buffer = lines[-1]
@@ -148,7 +120,7 @@ class SourceMonitorThread(Thread):
         '''
         Handle new line detect from the input
 
-        1) Performs metadata extration like line number and date string
+        1) Performs metadata extraction like line number and date string
 
         :param line: LogLine
         '''
@@ -161,90 +133,7 @@ class SourceMonitorThread(Thread):
         # TODO: Detect duplicate lines here?
 
         # Save line
-        with self.monitor_lock:
-            line.linenum = len(self.__log_lines)
-            self.__log_lines.append(line)
-
-            # Tell anyone waiting with wait_new_line_available() there's new data
-            #
-            # Since condition uses same lock, re-aquiring the lock might not
-            # be needed.  Shouldn't hurt though?
-            with self.__new_line_available:
-                self.__new_line_available.notify_all()
-
-
-    # -- Log line query methods --
-
-    def all_lines(self):
-        with self.monitor_lock:
-            for line in self.__log_lines:
-                yield line
-
-
-    def last_lines(self, num=None):
-        if num is None:
-            with self.monitor_lock:
-                for i in range(len(self.__log_lines)-1, 0-1, -1):
-                    yield self.__log_lines[i]
-        else:
-            for i, line in enumerate(self.last_lines()):
-                if i < num:
-                    yield line
-                else:
-                    return
-
-
-    @property
-    def last_line(self):
-        with self.monitor_lock:
-            if len(self.__log_lines) > 0:
-                return self.__log_lines[-1]
-            else:
-                return None
-
-
-    def wait_new_line_available(self, last_line_num, timeout_sec):
-        '''
-        Hold until either a new line has been detected in the log, or a timeout occurs
-
-        Don't need to hold lock to call this, as it will use the condition to wait until
-        available.
-
-        :param last_line_num:
-            The last LogLine.line_id the caller knows of.
-            Will only return lines greater than this.
-        :param timeout_sec:
-            The number of seconds to wait before timing out
-        :return:
-            List of new lines
-        :raises NoNewLines:
-            If the timeout occurs
-        '''
-
-        def _new_line_available():
-            last = self.last_line
-            if last is not None:
-                if last_line_num is None or last.line_id > last_line_num:
-                    return True
-            return False
-
-
-        with self.__new_line_available:
-
-            # Wait for new line to be available
-            while not _new_line_available():
-                if not self.__new_line_available.wait(timeout=timeout_sec):
-                    raise NoNewLines()
-
-            # Collect all new lines
-            lines = list()
-            for line in self.last_lines():
-                if last_line_num is None or line.line_id > last_line_num:
-                    lines.append(line)
-                else:
-                    break
-
-        return list(reversed(lines))
-
-
+        line.linenum = self.__next_line_num
+        self.__next_line_num += 1
+        self.collection.add(line)
 
