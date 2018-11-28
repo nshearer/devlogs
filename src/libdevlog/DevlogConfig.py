@@ -103,3 +103,7 @@ class NullDevlogConfig(DevlogConfig):
     def __init__(self):
         self.__data = dict()
 
+    @property
+    def monitors(self):
+        if False:
+            yield None
