@@ -9,7 +9,7 @@
     {% for monitor in server.monitors %}
           <div class="card mb-12" id="monitor_{{ monitor.monitor_id }}">
                 <div class="card-header">
-                    <i class="fa fa-stream fa-fw"></i> {{ monitor.source_spec }}
+                    <i class="fa fa-stream fa-fw"></i> <a href="log.html?monitor_id={{ monitor.monitor_id }}">{{ monitor.source_spec }}</a>
                 </div>
                 <div class="card-body">
                     <div class="log_line" id="monitor_{{ monitor.monitor_id }}_lastline">
