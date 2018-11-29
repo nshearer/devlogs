@@ -8,7 +8,7 @@ from . import DevlogHttpServer, DevlogConfig
 def cmd_args():
 
     root_parser = argparse.ArgumentParser()
-    root_parser.add_argument('path',
+    root_parser.add_argument('--path',
                              help="Path to devlog config file",
                              default='devlog.yml')
     subparsers = root_parser.add_subparsers(help='command')
@@ -55,11 +55,14 @@ def do_run(argv):
     server.serve_forever(argv.ip, argv.port)
 
 
-def main():
+def main(argv=None):
 
     # Parse args
-    argv = cmd_args().parse_args(sys.argv)
+    if argv is None:
+        argv = sys.argv[1:]
+    argv = cmd_args().parse_args(argv)
 
+    # Perform requested command
     if argv.cmd == 'init':
         do_init(argv)
     elif argv.cmd == 'run':
