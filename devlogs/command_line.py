@@ -13,8 +13,8 @@ def cmd_args():
                              default='devlog.yml')
     subparsers = root_parser.add_subparsers(help='command')
 
-    init_cmd = subparsers.add_parser("version")
-    init_cmd.set_defaults(cmd='version')
+    ver_cmd = subparsers.add_parser("version")
+    ver_cmd.set_defaults(cmd='version')
 
     init_cmd = subparsers.add_parser("init")
     init_cmd.set_defaults(cmd='init')
@@ -58,7 +58,7 @@ def do_run(argv):
 def main():
 
     # Parse args
-    argv = cmd_args().parse_args()
+    argv = cmd_args().parse_args(sys.argv)
 
     if argv.cmd == 'init':
         do_init(argv)
@@ -71,5 +71,3 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
-    main()
