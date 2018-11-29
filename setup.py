@@ -26,6 +26,7 @@ setup(
     ],
     install_requires=[
         'devhttp',
+        'yaml',
     ],
     include_package_data=True,
     zip_safe=False,  # True?
