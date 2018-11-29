@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name = 'devlogs',
-    version = '0.0.0.11', # version string
+    version = '0.0.1', # version string
     description = 'Development VM Log Watcher',
     long_description = readme(),
     url = 'https://github.com/shearern/devlogs',
