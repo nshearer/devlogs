@@ -6,17 +6,17 @@ def readme():
 
 setup(
     name = 'devlogs',
-    version = '0.0.0.4', # version string
+    version = '0.0.0.6', # version string
     description = 'Development VM Log Watcher',
     long_description = readme(),
     url = 'https://github.com/shearern/devlogs',
     author = 'Nathan Shearer',
     author_email = 'shearern@gmail.com',
     license = 'MIT',
-    packages = ['libdevlog', 'libdevlog.monitors', 'libdevlog.views'],
-    package_dir = {'': 'src'},
+    packages = ['devlogs', 'devlogs.monitors', 'devlogs.views'],
+    #package_dir = {'': 'src'},
     entry_points = {
-        'console_scripts': ['devlogs=libdevlog.command_line:main'],
+        'console_scripts': ['devlogs=devlogs.command_line:main'],
     },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
