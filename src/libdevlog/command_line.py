@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os
 import sys
 import argparse
@@ -53,7 +51,8 @@ def do_run(argv):
     print("Serving http://%s:%d" % (argv.ip, argv.port))
     server.serve_forever(argv.ip, argv.port)
 
-if __name__ == '__main__':
+
+def main():
 
     # Parse args
     argv = cmd_args().parse_args()
@@ -66,3 +65,6 @@ if __name__ == '__main__':
         print("Unknown command")
         sys.exit(1)
 
+
+if __name__ == '__main__':
+    main()

@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name = 'devlogs',
-    version = '0.0.3', # version string
+    version = '0.0.0.4', # version string
     description = 'Development VM Log Watcher',
     long_description = readme(),
     url = 'https://github.com/shearern/devlogs',
@@ -15,7 +15,9 @@ setup(
     license = 'MIT',
     packages = ['libdevlog', 'libdevlog.monitors', 'libdevlog.views'],
     package_dir = {'': 'src'},
-    scripts = ['src/devlogs', ],
+    entry_points = {
+        'console_scripts': ['devlogs=libdevlog.command_line:main'],
+    },
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'License :: OSI Approved :: MIT License',
