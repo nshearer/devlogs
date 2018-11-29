@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 fh.write(TEST_FILE_CONTENTS)
 
             # Do init
-            config_file = os.path.join(tmpdir, 'devlog.yml')
+            config_file = os.path.join(tmpdir, 'devlogs.yml')
             main(('--path', config_file, 'init'))
             if not os.path.exists(config_file):
                 raise TestFailed("init command didn't create devlog.yml")

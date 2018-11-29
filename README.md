@@ -22,8 +22,8 @@ This tool is NOT designed for production environments.
 Build Status
 ------------
 
-Master: [![CircleCI](https://circleci.com/gh/shearern/devlogs/tree/master.svg?style=svg)](https://circleci.com/gh/shearern/devlogs/tree/master)
-Develop: [![CircleCI](https://circleci.com/gh/shearern/devlogs/tree/develop.svg?style=svg)](https://circleci.com/gh/shearern/devlogs/tree/develop)
+ - Master: [![CircleCI](https://circleci.com/gh/shearern/devlogs/tree/master.svg?style=svg)](https://circleci.com/gh/shearern/devlogs/tree/master)
+ - Develop: [![CircleCI](https://circleci.com/gh/shearern/devlogs/tree/develop.svg?style=svg)](https://circleci.com/gh/shearern/devlogs/tree/develop)
 
 
 

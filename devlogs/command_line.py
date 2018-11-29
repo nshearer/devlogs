@@ -10,7 +10,7 @@ def cmd_args():
     root_parser = argparse.ArgumentParser()
     root_parser.add_argument('--path',
                              help="Path to devlog config file",
-                             default='devlog.yml')
+                             default='devlogs.yml')
     subparsers = root_parser.add_subparsers(help='command')
 
     ver_cmd = subparsers.add_parser("version")
@@ -21,7 +21,7 @@ def cmd_args():
 
     run_cmd = subparsers.add_parser("run")
     run_cmd.set_defaults(cmd='run')
-    run_cmd.add_argument('--ip', nargs='?', help="IP address to bind to", default='127.0.01')
+    run_cmd.add_argument('--ip', nargs='?', help="IP address to bind to", default='127.0.0.1')
     run_cmd.add_argument('--port', nargs='?', help="Port to listen to", default=8080, type=int)
     run_cmd.add_argument('--project_assets', action='store_true')
 
