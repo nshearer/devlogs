@@ -18,7 +18,7 @@ jobs:
     branches:
       only:
         - develop
-        - release/*
+        - /release\/.*/
         - master
 
     working_directory: ~/repo
