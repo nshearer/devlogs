@@ -67,7 +67,7 @@ class DevlogConfig:
         '''Config file directs devlog server on what to present'''
 
         if not os.path.exists(path):
-            raise KeyError("%s does not exist" % (self.__path))
+            raise KeyError("%s does not exist" % (path))
 
         self.__data = None
         self.__path = path
