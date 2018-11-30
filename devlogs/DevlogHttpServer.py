@@ -74,6 +74,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
         # Static Assets
         self.add_static('favicon.ico', os.path.join(assets, 'favicon.ico'))
         self.add_static('css/devlogs.css', os.path.join(assets, 'css', 'devlogs.css'))
+        self.add_static('css/sidebar-template.css', os.path.join(assets, 'css', 'sidebar-template.css'))
 
         # Templates
         self.add_asset('base.j2.html', os.path.join(assets, 'base.j2.html'))

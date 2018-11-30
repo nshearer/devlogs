@@ -906,29 +906,41 @@ CONFIG = dedent("""\
      - path:    {tmpdir}/missing.log
     """)
 
+class DynamicFileWriter(Thread):
+    '''Write to files that should show activity'''
 
-KEEP_WRITING = True
-def writer(path, min_wait, max_wait, content):
-    '''Function to write to files that should show activity'''
 
-    # Convert frequencies to 1/60 second
-    min_wait = int(min_wait * 60)
-    max_wait = int(max_wait * 60)
+    KEEP_WRITING = True
 
-    # Write to output folder
-    with open(path, 'wt') as fh:
+
+    def __init__(self, path, min_wait, max_wait, content):
+        self.path = path
+
+        # Convert frequencies to 1/60 second
+        self.min_wait = int(min_wait * 60)
+        self.max_wait = int(max_wait * 60)
+
+        self.content = content
+
+        super().__init__(daemon=True)
+
+
+    def run(self):
+
+        # Write to output folder
         while True:
-            for line in content.split("\n"):
+            for line in self.content.split("\n"):
 
                 # Check for kill code
-                if not KEEP_WRITING:
+                if not DynamicFileWriter.KEEP_WRITING:
                     return
 
                 # Output line
-                fh.write(line)
+                with open(self.path, 'at') as fh:
+                    fh.write(line + "\n")
 
                 # Wait
-                wait_60ths = randint(min_wait, max_wait)
+                wait_60ths = randint(self.min_wait, self.max_wait)
                 sleep(float(wait_60ths) / 60.0)
 
 
@@ -966,18 +978,18 @@ if __name__ == '__main__':
                 fh.write(content)
 
         # Start threads to write to files that get updated
-        writers.append(Thread(target=lambda: writer(os.path.join(tempdir, 'periodic-1.log'), 0.5, 2, LONG_CONTENT)))
-        writers.append(Thread(target=lambda: writer(os.path.join(tempdir, 'periodic-2.log'), 3, 10, SHORT_CONTENT)))
+        writers.append(DynamicFileWriter(os.path.join(tempdir, 'periodic-1.log'), 0.5, 2, LONG_CONTENT))
+        writers.append(DynamicFileWriter(os.path.join(tempdir, 'periodic-2.log'), 3, 10, SHORT_CONTENT))
         for w in writers:
             w.start()
 
         # Start server
-        main(('--path', config_path, 'run'))
+        main(('--path', config_path, 'run', '--project_assets'))
 
     finally:
 
         # Stop writing threads
-        KEEP_WRITING = False
+        DynamicFileWriter.KEEP_WRITING = False
         for t in writers:
             t.join()
 
