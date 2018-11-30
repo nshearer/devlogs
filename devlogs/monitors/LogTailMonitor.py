@@ -52,10 +52,13 @@ class LogTailMonitor(SourceMonitorThread):
 
             # If last bytes present, see if they're still there
             if self.__last_bytes is not None and self.__last_pos is not None:
-                with open(self.__path, 'rt') as fh:
+                with open(self.__path, 'rb') as fh:
                     last_read_pos = self.__last_pos - len(self.__last_bytes)
                     fh.seek(last_read_pos)
-                    if fh.read(len(self.__last_bytes)) != self.__last_bytes:
+                    new_contents = fh.read(len(self.__last_bytes))
+                    if new_contents != self.__last_bytes:
+                        self.__log.info("Content of file %s changed.  Restarting tail." % (
+                            self.__path))
                         self.__last_pos = None
                         self.__last_bytes = None
 
@@ -66,7 +69,7 @@ class LogTailMonitor(SourceMonitorThread):
                 pos = self.__last_pos
 
             # Read new bytes
-            with open(self.__path, 'rt') as fh:
+            with open(self.__path, 'rb') as fh:
                 if pos != 0:
                     fh.seek(pos)
                 new_data = fh.read(self.MAX_BYTES)
@@ -95,6 +98,9 @@ class LogTailMonitor(SourceMonitorThread):
             #     raise first_decode_e
             # else:
             #     raise Exception("Can we get to here?")
+
+            # Try to decode
+            new_data = new_data.decode(encoding='utf-8', errors='ignore')
 
             return new_data
 
