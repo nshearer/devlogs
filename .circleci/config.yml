@@ -26,12 +26,6 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          name: checkout submodules
-          command: |
-            git submodule init
-            git submodule update
-
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -50,12 +44,6 @@ jobs:
           paths:
             - ./venv
           key: v1-dependencies-{{ checksum "requirements.txt" }}
-
-      - run:
-          name: build assets module
-          command: |
-            . venv/bin/activate
-            python build_assets_module.py
 
       - run:
           name: run tests
