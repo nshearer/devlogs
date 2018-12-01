@@ -1,6 +1,3 @@
 [submodule "lib/devhttp"]
 	path = lib/devhttp
 	url = https://github.com/shearern/devhttp.git
-[submodule "lib/startbootstrap-sb-admin"]
-	path = lib/startbootstrap-sb-admin
-	url = https://github.com/BlackrockDigital/startbootstrap-sb-admin.git
