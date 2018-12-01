@@ -896,6 +896,14 @@ SHORT_CONTENT = dedent("""\
     Nov 29 06:09:07 ubuntu-bionic kernel: [    0.000000] SMBIOS 2.5 present.
     """)
 
+TEST_COMMAND = dedent("""\
+    from time import sleep
+    if __name__ == '__main__':
+        for i in range(10):
+            print("Command output %d" % (i))
+            sleep(3)
+    """)
+
 CONFIG = dedent("""\
     ---
     logs:
@@ -904,31 +912,49 @@ CONFIG = dedent("""\
      - path:    {tmpdir}/periodic-1.log
      - path:    {tmpdir}/periodic-2.log
      - path:    {tmpdir}/missing.log
+    commands:
+     - name:    Test Command
+       working: {tmpdir}
+       steps: |
+         - name: Run test_command.py
+           cmd:  {python} {tmpdir}/test_command.py
     """)
 
+class DynamicFileWriter(Thread):
+    '''Write to files that should show activity'''
 
-KEEP_WRITING = True
-def writer(path, min_wait, max_wait, content):
-    '''Function to write to files that should show activity'''
 
-    # Convert frequencies to 1/60 second
-    min_wait = int(min_wait * 60)
-    max_wait = int(max_wait * 60)
+    KEEP_WRITING = True
 
-    # Write to output folder
-    with open(path, 'wt') as fh:
+
+    def __init__(self, path, min_wait, max_wait, content):
+        self.path = path
+
+        # Convert frequencies to 1/60 second
+        self.min_wait = int(min_wait * 60)
+        self.max_wait = int(max_wait * 60)
+
+        self.content = content
+
+        super().__init__(daemon=True)
+
+
+    def run(self):
+
+        # Write to output folder
         while True:
-            for line in content.split("\n"):
+            for line in self.content.split("\n"):
 
                 # Check for kill code
-                if not KEEP_WRITING:
+                if not DynamicFileWriter.KEEP_WRITING:
                     return
 
                 # Output line
-                fh.write(line)
+                with open(self.path, 'at') as fh:
+                    fh.write(line + "\n")
 
                 # Wait
-                wait_60ths = randint(min_wait, max_wait)
+                wait_60ths = randint(self.min_wait, self.max_wait)
                 sleep(float(wait_60ths) / 60.0)
 
 
@@ -952,7 +978,7 @@ if __name__ == '__main__':
 
         # Create config file
         with open(config_path, 'wt') as fh:
-            fh.write(CONFIG.format(tmpdir=tempdir))
+            fh.write(CONFIG.format(tmpdir=tempdir, python=sys.executable))
 
         # Create files to look at
         logs = [
@@ -960,24 +986,25 @@ if __name__ == '__main__':
             (os.path.join(tempdir, 'kernlog'), SHORT_CONTENT),
             (os.path.join(tempdir, 'periodic-1.log'), ''),
             (os.path.join(tempdir, 'periodic-2.log'), ''),
+            (os.path.join(tempdir, 'test_command.py'), TEST_COMMAND),
         ]
         for path, content in logs:
             with open(path, 'wt') as fh:
                 fh.write(content)
 
         # Start threads to write to files that get updated
-        writers.append(Thread(target=lambda: writer(os.path.join(tempdir, 'periodic-1.log'), 0.5, 2, LONG_CONTENT)))
-        writers.append(Thread(target=lambda: writer(os.path.join(tempdir, 'periodic-2.log'), 3, 10, SHORT_CONTENT)))
+        writers.append(DynamicFileWriter(os.path.join(tempdir, 'periodic-1.log'), 0.5, 2, LONG_CONTENT))
+        writers.append(DynamicFileWriter(os.path.join(tempdir, 'periodic-2.log'), 3, 10, SHORT_CONTENT))
         for w in writers:
             w.start()
 
         # Start server
-        main(('--path', config_path, 'run'))
+        main(('--path', config_path, 'run', '--project_assets'))
 
     finally:
 
         # Stop writing threads
-        KEEP_WRITING = False
+        DynamicFileWriter.KEEP_WRITING = False
         for t in writers:
             t.join()
 
