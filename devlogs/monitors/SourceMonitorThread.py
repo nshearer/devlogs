@@ -1,3 +1,4 @@
+import os
 from threading import Thread
 #from dateparser.search import search_dates
 from time import sleep
@@ -59,6 +60,15 @@ class SourceMonitorThread(Thread):
     def source_spec(self):
         '''What to display to the user on what this is monitoring'''
         return self.__name
+
+
+    @property
+    def short_spec(self):
+        '''Shorter version of source specification'''
+        name = os.path.basename(self.source_spec)
+        if len(name) > 20:
+            name = name[:15] + '..' + os.path.splitext(name)[-5:]
+        return name
 
 
     def run(self):
