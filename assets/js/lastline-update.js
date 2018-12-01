@@ -26,8 +26,6 @@ function LogLineUpdater() {
 
             success: function (response) {
 
-                console.log("Got " + response.status + " /nextlines ");
-
                 if (response.status == 'ok') {
 
                     // Collect just the last lines
