@@ -8,6 +8,11 @@ div.monitor_lastline {
     padding-bottom: 20px;
 }
 
+.monitor_lastline_header {
+    font-family: monospace;
+    border-top: 1px solid lightgray;
+}
+
 /*
     DEMO STYLE
 */
