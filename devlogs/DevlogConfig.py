@@ -52,13 +52,12 @@ class DevlogConfig:
          - cmd:  systemctl status ssh
            type: command
         commands:
-         - name:     Build
-           title:    Build Test Server
+         - name:     Build Test Server
            working:  /vagrant/devlog
-           commands:
-            - title: Run tests
+           steps:
+            - name:  Run tests
               cmd:   run_tests.sh
-            - title: Collect Statics
+            - name:  Collect Statics
               cmd:   python manage.py collectstatic
         """)
 
@@ -96,6 +95,7 @@ class DevlogConfig:
 
         except KeyError:
             self._syntax_error("Missing logs: section")
+
 
 
 class NullDevlogConfig(DevlogConfig):

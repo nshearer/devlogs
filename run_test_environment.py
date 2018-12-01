@@ -896,6 +896,14 @@ SHORT_CONTENT = dedent("""\
     Nov 29 06:09:07 ubuntu-bionic kernel: [    0.000000] SMBIOS 2.5 present.
     """)
 
+TEST_COMMAND = dedent("""\
+    from time import sleep
+    if __name__ == '__main__':
+        for i in range(10):
+            print("Command output %d" % (i))
+            sleep(3)
+    """)
+
 CONFIG = dedent("""\
     ---
     logs:
@@ -904,6 +912,12 @@ CONFIG = dedent("""\
      - path:    {tmpdir}/periodic-1.log
      - path:    {tmpdir}/periodic-2.log
      - path:    {tmpdir}/missing.log
+    commands:
+     - name:    Test Command
+       working: {tmpdir}
+       steps: |
+         - name: Run test_command.py
+           cmd:  {python} {tmpdir}/test_command.py
     """)
 
 class DynamicFileWriter(Thread):
@@ -964,7 +978,7 @@ if __name__ == '__main__':
 
         # Create config file
         with open(config_path, 'wt') as fh:
-            fh.write(CONFIG.format(tmpdir=tempdir))
+            fh.write(CONFIG.format(tmpdir=tempdir, python=sys.executable))
 
         # Create files to look at
         logs = [
@@ -972,6 +986,7 @@ if __name__ == '__main__':
             (os.path.join(tempdir, 'kernlog'), SHORT_CONTENT),
             (os.path.join(tempdir, 'periodic-1.log'), ''),
             (os.path.join(tempdir, 'periodic-2.log'), ''),
+            (os.path.join(tempdir, 'test_command.py'), TEST_COMMAND),
         ]
         for path, content in logs:
             with open(path, 'wt') as fh:
