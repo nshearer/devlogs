@@ -917,7 +917,7 @@ CONFIG = dedent("""\
        working: {tmpdir}
        steps:
          - name: Run test_command.py
-           cmd:  {python} {tmpdir}/test_command.py
+           cmd:  {python} {tmpdir}\\test_command.py
     """)
 
 class DynamicFileWriter(Thread):

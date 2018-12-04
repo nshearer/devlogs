@@ -4,6 +4,7 @@ from threading import RLock, Thread
 from tempfile import TemporaryDirectory, gettempdir
 from queue import Queue, Empty
 import subprocess
+from datetime import datetime
 
 from .SourceMonitorThread import SourceMonitorThread
 
@@ -70,7 +71,7 @@ class CommandMonitor(SourceMonitorThread):
         '''
         with self.__lock:
 
-            self._assert_state(self.READY, self.ERROR)
+            self._assert_state(self.READY, self.ERROR, self.FINISHED)
             self.__command_thread = Thread(target=self._run_all_steps)
             self.__command_thread.start()
             self.__state = self.RUNNING
@@ -78,36 +79,55 @@ class CommandMonitor(SourceMonitorThread):
 
     def _run_all_steps(self):
 
+        # Output Execution Header
+        header = "Executing command at " + str(datetime.now())
+        self.__command_output.put('='*len(header) + "\n")
+        self.__command_output.put(header + "\n")
+        self.__command_output.put('='*len(header) + "\n")
+
         # Prep for execution
         step_stack = self.__steps[:]
         tempdir = TemporaryDirectory()
-        script_path = os.path.join(tempdir.name, 'step.sh')
+        script_path = None
 
         for i, step in enumerate(step_stack):
 
             # Get next command
             name, commands = step
 
-            # Prep shell script to execute
-            with open(script_path, 'wt') as fh:
-                fh.write("\n".join([c.rstrip() for c in commands]) + "\n")
-
-            # Step headers
+            # Output step header
             self.__command_output.put("""\
-                
+
                 ========== Step %d of %d: %s ========== 
-                """ % (i+1, len(step_stack), name))
+                """ % (i + 1, len(step_stack), name))
+
+            # Prep shell script to execute
+            args = None
+            if os.name == 'nt':
+                script_path = os.path.join(tempdir.name, 'step.cmd')
+                with open(script_path, 'wt') as fh:
+                    fh.write("\n".join([c.rstrip() for c in commands.split("\n")]) + "\n")
+                args = (script_path, )
+            elif os.name == 'posix':
+                script_path = os.path.join(tempdir.name, 'step.sh')
+                with open(script_path, 'wt') as fh:
+                    fh.write("\n".join([c.rstrip() for c in commands.split("\n")]) + "\n")
+                args = ('bash', script_path)
+            else:
+                raise Exception("Don't know how to execute on " + os.name)
 
             # Start execution of the commands for this step
             process = subprocess.Popen(
-                args = ('bash', script_path),
+                args = args,
                 stdout = subprocess.PIPE,
                 stderr = subprocess.STDOUT,
                 cwd = self.__command_working_dir)
 
+            # TODO: Currently unable to iterate over output as it comes out.
+            process.wait()
+
             # Monitor output until complete
-            for line in process.stdout.readlines():
-                self.__command_output.put(line)
+            self.__command_output.put(process.stdout.read())
 
             # Show step return code
             self.__command_output.put("Step %s completed with exit code %d\n" % (
@@ -124,7 +144,8 @@ class CommandMonitor(SourceMonitorThread):
 
         # Cleanup
         self.__command_output.put("\nAll steps Finished\n")
-        os.unlink(script_path)
+        if script_path is not None and os.path.exists(script_path):
+            os.unlink(script_path)
         tempdir.cleanup()
         with self.__lock:
             self.__state = self.FINISHED
@@ -140,6 +161,10 @@ class CommandMonitor(SourceMonitorThread):
             return self.__command_output.get(block=False)
         except Empty:
             return None
+
+
+    def handle_new_chars(self, chars):
+        return super().handle_new_chars(chars)
 
 
 

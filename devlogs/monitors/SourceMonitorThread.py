@@ -74,6 +74,11 @@ class SourceMonitorThread(Thread):
     def run(self):
         while True:
             new_data = self.get_new_chars()
+
+            # Make sure new data is in chars
+            if new_data.__class__ is bytes:
+                new_data = new_data.decode('utf-8')
+
             if new_data is not None:
                 for line in self.handle_new_chars(new_data):
                     self.handle_new_line(line)
