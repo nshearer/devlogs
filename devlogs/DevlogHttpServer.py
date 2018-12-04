@@ -6,6 +6,7 @@ from . import views
 
 from .monitors import LogTailMonitor
 from .monitors import LogLineGroup
+from .monitors import CommandMonitor
 
 class DevlogHttpServer(DevelopmentHttpServer):
     '''
@@ -52,6 +53,7 @@ class DevlogHttpServer(DevelopmentHttpServer):
 
         self.add_dynamic('status', views.status_view, content_type='application/json')
         self.add_dynamic('nextlines', views.nextlines_view, content_type='application/json', autolock=False)
+        self.add_dynamic('execute-command', views.execute_command, content_type='application/json', autolock=False)
 
         # Redirects
         self.redirect('', 'index.html')
@@ -66,10 +68,10 @@ class DevlogHttpServer(DevelopmentHttpServer):
         '''
         assets = os.path.join(project_folder, 'assets')
     
-        for bootstrap_dir in ('css', 'js', 'vendor'):
-            self.add_multiple_static(
-                bootstrap_dir,
-                os.path.join(project_folder, 'lib', 'startbootstrap-sb-admin', bootstrap_dir))
+        # for bootstrap_dir in ('css', 'js', 'vendor'):
+        #     self.add_multiple_static(
+        #         bootstrap_dir,
+        #         os.path.join(project_folder, 'lib', 'startbootstrap-sb-admin', bootstrap_dir))
 
         # Static Assets
         self.add_static('favicon.ico', os.path.join(assets, 'favicon.ico'))
@@ -108,8 +110,23 @@ class DevlogHttpServer(DevelopmentHttpServer):
                     monitor_id = monitor_id)
 
                 self.monitors.append(monitor)
-
                 self.all_log_lines.add_collection(monitor.collection)
+
+            elif monitor_config.monitor_type == 'command':
+
+                monitor = CommandMonitor(
+                    monitor_id = monitor_id,
+                    name = monitor_config.name,
+                    working_dir = monitor_config.working_dir,
+                )
+                for step in monitor_config.steps:
+                    monitor.add_step(step['name'], step['commands'])
+
+                self.monitors.append(monitor)
+                self.all_log_lines.add_collection(monitor.collection)
+
+            else:
+                raise Exception("Unknown monitor type: " + str(monitor_config.monitor_type))
 
 
     def start_monitors(self):

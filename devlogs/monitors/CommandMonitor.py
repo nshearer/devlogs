@@ -1,7 +1,14 @@
 import os
 import logging
+from threading import RLock, Thread
+from tempfile import TemporaryDirectory, gettempdir
+from queue import Queue, Empty
+import subprocess
 
 from .SourceMonitorThread import SourceMonitorThread
+
+
+class CommandStateError(Exception): pass
 
 
 class CommandMonitor(SourceMonitorThread):
@@ -15,100 +22,131 @@ class CommandMonitor(SourceMonitorThread):
     ERROR = 'error'
 
 
-    def __init__(self, path, monitor_id, sleep_sec=1, encoding='utf8'):
+    def __init__(self, monitor_id, name, working_dir=None):
 
         self.__log = logging.getLogger(__name__)
 
-        self.__path = os.path.abspath(path)
-        self.__encoding = encoding
-        self.__name = "monitor-%s" % (monitor_id)
+        self.__name = name
+        self.__command_working_dir = working_dir
+        if self.__command_working_dir is None:
+            self.__command_working_dir = gettempdir() # /tmp
+        self.__steps = list()
 
-        if self.__path is not None:
-            if os.path.exists(self.__path) and os.path.isfile(self.__path):
-                self.__name += '-'+os.path.basename(self.__path)
-            else:
-                self.__log.warning("%s is not a file or does not exist" % (self.__path))
+        self.__lock = RLock()
+        self.__state = self.READY
 
-        super().__init__(monitor_id=monitor_id, name=self.__name, sleep_sec=sleep_sec)
+        self.__command_thread = None
+        self.__command_output = Queue()
 
-        self.__last_bytes = None
-        self.__last_pos = None
+        super().__init__(monitor_id=monitor_id, name=self.__name, sleep_sec=1)
+
+
+    def _assert_state(self, *states):
+        with self.__lock:
+            if self.__state not in states:
+                raise CommandStateError("Can't call in this state (%s not in %s)" % (
+                    self.__state, ', '.join(states)))
 
 
     @property
     def source_spec(self):
         '''What to display to the user on what this is monitoring'''
-        return self.__path
+        return "%s Command" % (self.name)
+
+
+    def add_step(self, name, commands):
+        '''
+        Add a step to be executed when this command is requested by the user
+
+        :param name: Name of the step
+        :param commands: Shell commands to run to execute the step
+        '''
+        self.__steps.append((name, commands))
+
+
+    def start_command(self):
+        '''
+        Start the command
+        '''
+        with self.__lock:
+
+            self._assert_state(self.READY, self.ERROR)
+            self.__command_thread = Thread(target=self._run_all_steps)
+            self.__command_thread.start()
+            self.__state = self.RUNNING
+
+
+    def _run_all_steps(self):
+
+        # Prep for execution
+        step_stack = self.__steps[:]
+        tempdir = TemporaryDirectory()
+        script_path = os.path.join(tempdir.name, 'step.sh')
+
+        for i, step in enumerate(step_stack):
+
+            # Get next command
+            name, commands = step
+
+            # Prep shell script to execute
+            with open(script_path, 'wt') as fh:
+                fh.write("\n".join([c.rstrip() for c in commands]) + "\n")
+
+            # Step headers
+            self.__command_output.put("""\
+                
+                ========== Step %d of %d: %s ========== 
+                """ % (i+1, len(step_stack), name))
+
+            # Start execution of the commands for this step
+            process = subprocess.Popen(
+                args = ('bash', script_path),
+                stdout = subprocess.PIPE,
+                stderr = subprocess.STDOUT,
+                cwd = self.__command_working_dir)
+
+            # Monitor output until complete
+            for line in process.stdout.readlines():
+                self.__command_output.put(line)
+
+            # Show step return code
+            self.__command_output.put("Step %s completed with exit code %d\n" % (
+                name, process.returncode))
+
+            # Check for error
+            if process.returncode != 0:
+                self.__command_output.put("Aborting execution due to error\n")
+                with self.__lock:
+                    self.__state = self.ERROR
+                    os.unlink(script_path)
+                    tempdir.cleanup()
+                return
+
+        # Cleanup
+        self.__command_output.put("\nAll steps Finished\n")
+        os.unlink(script_path)
+        tempdir.cleanup()
+        with self.__lock:
+            self.__state = self.FINISHED
 
 
     def get_new_chars(self):
         '''
         Check source to see if there are any new bytes to read
 
-        :return: yield new chars (forever)
+        :return: Any new data from the command output
         '''
+        try:
+            return self.__command_output.get(block=False)
+        except Empty:
+            return None
 
-        if os.path.exists(self.__path):
 
-            # Check to see if file shrunk
-            if self.__last_pos is not None:
-                if os.path.getsize(self.__path) < self.__last_pos:
-                    self.__last_pos = None
-                    self.__last_bytes = None
 
-            # If last bytes present, see if they're still there
-            if self.__last_bytes is not None and self.__last_pos is not None:
-                with open(self.__path, 'rb') as fh:
-                    last_read_pos = self.__last_pos - len(self.__last_bytes)
-                    fh.seek(last_read_pos)
-                    new_contents = fh.read(len(self.__last_bytes))
-                    if new_contents != self.__last_bytes:
-                        self.__log.info("Content of file %s changed.  Restarting tail." % (
-                            self.__path))
-                        self.__last_pos = None
-                        self.__last_bytes = None
 
-            # Determine where to start
-            if self.__last_bytes is None or self.__last_pos is None:
-                pos = 0
-            else:
-                pos = self.__last_pos
 
-            # Read new bytes
-            with open(self.__path, 'rb') as fh:
-                if pos != 0:
-                    fh.seek(pos)
-                new_data = fh.read(self.MAX_BYTES)
 
-            if not new_data:
-                return None
 
-            # Save state for next call
-            self.__last_pos = pos + len(new_data)
-            self.__last_bytes = new_data
-
-            # # Decode and return (optionally stripping up to 3 chars off tail to help decode)
-            # first_decode_e = None
-            # for i in (0, 1, 2, 3):
-            #     if i > 0:
-            #         self.__last_pos -= 1
-            #         self.__last_bytes = self.__last_bytes[:-1]
-            #     if len(self.__last_bytes) > 0:
-            #         try:
-            #             return new_data.decode(self.__encoding)
-            #         except Exception as e:
-            #             if first_decode_e is None:
-            #                 first_decode_e = e
-            #
-            # if first_decode_e:
-            #     raise first_decode_e
-            # else:
-            #     raise Exception("Can we get to here?")
-
-            # Try to decode
-            new_data = new_data.decode(encoding='utf-8', errors='ignore')
-
-            return new_data
 
 
 

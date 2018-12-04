@@ -915,7 +915,7 @@ CONFIG = dedent("""\
     commands:
      - name:    Test Command
        working: {tmpdir}
-       steps: |
+       steps:
          - name: Run test_command.py
            cmd:  {python} {tmpdir}/test_command.py
     """)
@@ -956,9 +956,6 @@ class DynamicFileWriter(Thread):
                 # Wait
                 wait_60ths = randint(self.min_wait, self.max_wait)
                 sleep(float(wait_60ths) / 60.0)
-
-
-
 
 
 if __name__ == '__main__':

@@ -26,6 +26,8 @@ class DevlogConfigSection:
 class DevlogLogConfig(DevlogConfigSection):
     '''Entry in logs: in config file'''
 
+    monitor_type = 'tail'
+
     @property
     def path(self):
         '''Path to monitor'''
@@ -34,12 +36,53 @@ class DevlogLogConfig(DevlogConfigSection):
         except KeyError:
             self._syntax_error("Missing required path")
 
+
+class DevlogCommandConfig(DevlogConfigSection):
+
+    monitor_type = 'command'
+
     @property
-    def monitor_type(self):
+    def name(self):
         try:
-            return self.info['type']
+            return self.info['name']
         except KeyError:
-            return 'tail'
+            self._syntax_error("Missing required name")
+
+    @property
+    def working_dir(self):
+        try:
+            return self.info['working_dir']
+        except KeyError:
+            return None
+
+    @property
+    def steps(self):
+        try:
+            steps = list(self.info['steps'])
+        except:
+            self._syntax_error("Missing steps")
+
+        for i, step in enumerate(steps):
+
+            try:
+                name = step['name']
+            except:
+                self._syntax_error("Step %d is missing a name" % (i+1))
+
+            try:
+                commands = step['commands']
+            except:
+                try:
+                    commands = step['cmd']
+                except:
+                    self._syntax_error("Step %d is missing a commands block" % (i+1))
+
+
+            yield {
+                'name': name,
+                'commands': commands
+            }
+
 
 
 class DevlogConfig:
@@ -89,13 +132,20 @@ class DevlogConfig:
 
         :return: DevlogLogConfigs
         '''
+
+        # Add log files to monitor
         try:
             for info in self.__data['logs']:
                 yield DevlogLogConfig(self.__path, info)
-
         except KeyError:
             self._syntax_error("Missing logs: section")
 
+        # Add command monitors
+        try:
+            for info in self.__data['commands']:
+                yield DevlogCommandConfig(self.__path, info)
+        except KeyError:
+            pass # no ['commands']
 
 
 class NullDevlogConfig(DevlogConfig):

@@ -3,3 +3,4 @@ from .log import log_view
 
 from .status import status_view
 from .nextlines import nextlines_view
+from .execute_command import execute_command
